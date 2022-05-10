@@ -1,0 +1,56 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+)
+
+var (
+	path         string
+	port         string
+	nameAuth     string
+	passwordAuth string
+)
+
+func main() {
+	flag.StringVar(&port, "port", "8000", "Port number")
+	flag.StringVar(&path, "path", "nutshell", "File server path")
+	flag.StringVar(&nameAuth, "name", "nutshell", "auth")
+	flag.StringVar(&passwordAuth, "password", "nutshell", "auth")
+
+	flag.Parse()
+
+	http.HandleFunc("/", detector)
+	_ = http.ListenAndServe(":"+port, nil)
+}
+
+func detector(w http.ResponseWriter, r *http.Request) {
+	if strings.HasSuffix(r.RequestURI, "upload") {
+		uploadHandler(w, r)
+		return
+	}
+	name, password, ok := r.BasicAuth()
+	if !ok {
+		w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, "need log in "))
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	} else {
+		if !(name == nameAuth && password == passwordAuth) {
+			w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, "need log in "))
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	}
+	// print logs
+	ip := strings.Split(r.RemoteAddr, ":")[0]
+	log.Println(ip, r.RequestURI, "visited")
+
+	if strings.HasSuffix(r.RequestURI, "index") {
+		uploadPageHandler(w, r)
+		return
+	}
+	http.FileServer(http.Dir(path)).ServeHTTP(w, r)
+}
