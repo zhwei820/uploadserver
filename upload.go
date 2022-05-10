@@ -96,7 +96,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	formdata := r.MultipartForm
 
 	// multipart parameter "file" need to specified when upload
-	files := formdata.File["file"]
+	files := formdata.File["files"]
 
 	if len(files) == 0 {
 		fmt.Fprintf(w, "need to provide file(multipart form) or data\n")
