@@ -18,8 +18,8 @@ var (
 func main() {
 	flag.StringVar(&port, "port", "8000", "Port number")
 	flag.StringVar(&path, "path", "nutshell", "File server path")
-	flag.StringVar(&nameAuth, "name", "nutshell", "auth")
-	flag.StringVar(&passwordAuth, "password", "nutshell", "auth")
+	flag.StringVar(&nameAuth, "name", "", "auth")
+	flag.StringVar(&passwordAuth, "password", "", "auth")
 
 	flag.Parse()
 
