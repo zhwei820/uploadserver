@@ -32,18 +32,21 @@ func detector(w http.ResponseWriter, r *http.Request) {
 		uploadHandler(w, r)
 		return
 	}
-	name, password, ok := r.BasicAuth()
-	if !ok {
-		w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, "need log in "))
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	} else {
-		if !(name == nameAuth && password == passwordAuth) {
+	if nameAuth != "" {
+		name, password, ok := r.BasicAuth()
+		if !ok {
 			w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, "need log in "))
 			w.WriteHeader(http.StatusUnauthorized)
 			return
+		} else {
+			if !(name == nameAuth && password == passwordAuth) {
+				w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, "need log in "))
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
 		}
 	}
+
 	// print logs
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 	log.Println(ip, r.RequestURI, "visited")
