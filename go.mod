@@ -1,4 +1,4 @@
-module fileserver2
+module fileserver
 
 go 1.14
 
