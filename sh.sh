@@ -1,1 +1,0 @@
-curl -X POST -F "files=@readme.md"  -F "file_path=a"  'http://localhost:8000/index/upload'
