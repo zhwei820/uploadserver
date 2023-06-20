@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"strings"
+	"time"
 )
 
 var (
@@ -14,6 +17,25 @@ var (
 	nameAuth     string
 	passwordAuth string
 )
+
+func cleanOldFiles() {
+	fmt.Println("cleanOldFiles start")
+	// 调用find命令删除30天以上的文件
+	cmd := exec.Command("bash", "clean.sh")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
+}
+
+func cronCleanOldFiles() {
+	cleanOldFiles()
+
+	fmt.Println("cronCleanOldFiles start")
+	ticker := time.NewTicker(12 * time.Hour)
+	for range ticker.C {
+		cleanOldFiles()
+	}
+}
 
 func main() {
 	flag.StringVar(&port, "port", "8000", "Port number")
@@ -27,6 +49,9 @@ func main() {
 
 	fmt.Println("use: http://localhost:8000/index to upload file")
 	fmt.Println("use: http://localhost:8000/index/ to view file")
+
+	go cronCleanOldFiles()
+
 	_ = http.ListenAndServe(":"+port, nil)
 }
 
