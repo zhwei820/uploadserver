@@ -1,7 +1,8 @@
 nutshell/index/upload/aa.json
 sec.md
-main.go
 uploadserver
 nutshell/index/
 nohup.out
 aa.out
+*.html
+cover_upload/cover_upload
