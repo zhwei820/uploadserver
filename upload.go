@@ -12,78 +12,23 @@ import (
 	"github.com/chinglinwen/log"
 )
 
-//concern for name collision, filename need to be unique
+// concern for name collision, filename need to be unique
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
-	targetFile := r.FormValue("file")
+	relFilePath := r.FormValue("file_path")
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 	uri := strings.NewReplacer("/uploadapi", "").Replace(r.RequestURI)
-	fileurl := ospath.Join(path, uri, targetFile)
+
+	fileUrl2 := ospath.Join(path, uri, relFilePath)
 
 	var validPath = regexp.MustCompile(`.*\.\.\/.*`)
-	if validPath.MatchString(fileurl) {
+	if validPath.MatchString(fileUrl2) {
 		fmt.Fprintf(w, "file path should not contain the two dot\n")
 		return
 	}
 
 	if ip == "[" {
 		ip = "127.0.0.1"
-	}
-
-	delete := r.FormValue("delete")
-	if len(delete) != 0 {
-		if targetFile == "" {
-			log.Println(w, "filename not specified")
-			return
-		}
-		err := os.RemoveAll(fileurl)
-		if err != nil {
-			log.Println(w, err)
-			return
-		}
-		fmt.Fprintf(w, "file: %v deleted\n", targetFile)
-		log.Println(ip, uri, targetFile, "deleted")
-		return
-	}
-
-	appendmode := r.FormValue("append")
-	flags := mode(len(appendmode) != 0)
-
-	data := r.FormValue("data")
-	if data != "" {
-		if targetFile == "" {
-			log.Println(w, "filename not specified")
-			return
-		}
-		d := strings.NewReader(data)
-
-		dir := ospath.Dir(fileurl)
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			fmt.Fprintf(w, "mkdir error %v\n", err)
-			return
-		}
-
-		out, err := os.OpenFile(fileurl, flags, 0644)
-		if err != nil {
-			fmt.Fprintf(w, "Unable to create the file for writing")
-			return
-		}
-		defer out.Close()
-
-		n, err := io.Copy(out, d)
-		if err != nil {
-			log.Println(w, err)
-			return
-		}
-
-		note := "(default truncate if file exist)"
-		if len(appendmode) != 0 {
-			note = "( appendmode )"
-		}
-		fmt.Fprintf(w, "Files uploaded successfully : %v %v bytes %v\n", targetFile, n, note)
-		log.Println(ip, uri, targetFile, "created")
-		return
 	}
 
 	// no bigger than 10G
@@ -111,30 +56,20 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		filename := files[i].Filename
+		f := files[i].Filename
 
-		var f string
-		if targetFile == "" {
-			f = filename
-		} else {
-			f = targetFile
-		}
+		fileUrl := ospath.Join(path, uri, relFilePath, f)
+		fmt.Println("fileUrl", fileUrl)
+		fmt.Println("uri", uri)
 
-		var fileurl string
-		if ospath.Dir(targetFile) == "." {
-			fileurl = ospath.Join(path, uri, f)
-		} else {
-			fileurl = ospath.Join(path, f)
-		}
-
-		dir := ospath.Dir(fileurl)
+		dir := ospath.Dir(fileUrl)
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
 			log.Println(w, "mkdir error %v\n", err)
 			continue
 		}
 
-		out, err := os.OpenFile(fileurl, flags, 0644)
+		out, err := os.OpenFile(fileUrl, mode(false), 0644)
 		if err != nil {
 			fmt.Fprintf(w, "Unable to create the file for writing")
 			continue
@@ -147,11 +82,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		note := "(default truncate if file exist)"
-		if len(appendmode) != 0 {
-			note = "( appendmode )"
-		}
-		fmt.Fprintf(w, "Files uploaded successfully : %v %v bytes %v\n", f, n, note)
+		note := "(replace old file if file exist)"
+
+		fmt.Fprintf(w, "Files uploaded successfully : %v %v bytes %v\n", fileUrl, n, note)
 		log.Println(ip, uri, f, "created")
 	}
 }

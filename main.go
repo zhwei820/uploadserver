@@ -24,6 +24,9 @@ func main() {
 	flag.Parse()
 
 	http.HandleFunc("/", detector)
+
+	fmt.Println("use: http://localhost:8000/index to upload file")
+	fmt.Println("use: http://localhost:8000/index/ to view file")
 	_ = http.ListenAndServe(":"+port, nil)
 }
 
