@@ -8,6 +8,8 @@ aa.out
 cover_upload/cover_upload
 example/example
 profile.txt
-example/
 cov/
 app
+example/localPersistence.txt
+example/main_goc
+example/main_goc_profile_listen_addr

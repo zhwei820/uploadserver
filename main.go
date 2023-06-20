@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"time"
 )
@@ -52,7 +53,16 @@ func main() {
 
 	go cronCleanOldFiles()
 
-	_ = http.ListenAndServe(":"+port, nil)
+	go func() {
+		_ = http.ListenAndServe(":"+port, nil)
+	}()
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, os.Kill)
+	select {
+	case <-sig:
+		fmt.Println("exit!")
+	}
+
 }
 
 func detector(w http.ResponseWriter, r *http.Request) {
